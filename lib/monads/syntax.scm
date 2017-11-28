@@ -3,11 +3,11 @@
 
   (import (rnrs (6))
           (monads gen-id)
-          (monads aux-keyword))
-          ; (only (chezscheme) trace-define-syntax meta))
+          (monads aux-keyword)
+          (only (chezscheme) trace-define-syntax meta))
 
   #| Defines a context; think of it as a persistent let-binding.
-   | 
+   |
    |   (define-context <name> (<var> <value>) ...)
    |
    | creates a new syntax `with-<name>` that expands to
@@ -32,10 +32,29 @@
            )))))
 
   #| Defines a context for the defined monad. In addition to the given
-   | parameters for the chain and return operators, the sequence syntax
-   | is defined.
+   | parameters for the chain and return operators, the sequence syntax is
+   | defined.
+   |
+   | For a generic monad, this syntax looks like:
+   |
+   |   (define-syntax seq
+   |     (syntax-rules (<-)
+   |       ;; last one get's out
+   |       ((seq foo) foo)
+   |
+   |       ;; chain notation
+   |       ((seq (arg <- foo) rest ...)
+   |        (>>= foo (lambda (arg) (seq rest ...))))
+   |
+   |       ;; side-effects, result is not used
+   |       ((seq foo rest ...)
+   |        (>>= foo (lambda (_) (seq rest ...))))))
+   |
+   | We use the contexts defined above to create specific syntax for each
+   | defined monad. This means that, within the `seq` syntax, the operators
+   | `>>=` and `return` work as expected.
    |#
-  (define-syntax define-monad
+  (trace-define-syntax define-monad
     (lambda (x)
       (syntax-case x ()
         ((define-monad <name> <chain-def> <return-def>)
@@ -48,13 +67,16 @@
                  (<chain>  <chain-def>)
                  (<return> <return-def>))
 
-               (define-syntax <seq>
+               (trace-define-syntax <seq>
                  (syntax-rules (<-)
-                   ((_ <<f>>) <<f>>)
+                   ((_ <<f>>)
+                    (<with> <<f>>))
+
                    ((_ (<<formal>> <- <<f>>) <<rest>> (... ...))
                     (<with>
                       (<chain> <<f>>
                                (lambda (<<formal>>) (<seq> <<rest>> (... ...))))))
+
                    ((_ <<f>> <<rest>> (... ...))
                     (<with>
                       (<chain> <<f>> (lambda (x) (<seq> <<rest>> (... ...)))))))))
