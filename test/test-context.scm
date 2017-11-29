@@ -22,11 +22,11 @@
   (y <- (+ x 1))
   (return y))) (newline)
 
-(display (with-maybe (seq-maybe
+(display (seq-maybe
   (x <- (div 1 3))
   (y <- (+ x 1))
   (z <- (return y))
-  z))) (newline)
+  z)) (newline)
 
 (with-x
   (display (+ a b)))
