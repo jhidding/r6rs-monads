@@ -6,12 +6,6 @@
           (monads aux-keyword)
           (only (chezscheme) trace-define-syntax meta))
 
-  (define (context-transformer t-id vars exprs . body)
-    (let ((bindings (map (lambda (v e)
-                           (list (datum->syntax t-id (syntax->datum v)) e))
-                           vars exprs)))
-      bindings))
-
   #| Defines a context; think of it as a persistent let-binding.
    |
    |   (define-context <name> (<var> <value>) ...)
@@ -23,22 +17,6 @@
    | such that the variables <var> ... are in scope of <expression>.
    |#
   (define-syntax define-context
-    (lambda (x)
-      (syntax-case x ()
-        ((define-context <name> (<var> <expr>) ...)
-         (with-syntax ((<with> (gen-id #'<name> "with-" #'<name>)))
-           #'(define-syntax <with>
-               (lambda (y)
-                 (syntax-case y ()
-                   ((<with> <<expr>> (... ...))
-                    #`(letrec #,(context-transformer
-                                 #'<with>
-                                 (list #'<var> ...)
-                                 (list #'<expr> ...))
-                        <<expr>> (... ...))))))
-           )))))
-
-  (define-syntax define-context-old
     (lambda (x)
       (syntax-case x ()
         ((define-context <name> (<var> <expr>) ...)
