@@ -4,7 +4,7 @@
   (import (rnrs (6))
           (monads gen-id)
           (monads aux-keyword)
-          (only (chezscheme) trace-define-syntax meta))
+          (only (chezscheme) trace-define-syntax))
 
   #| Defines a context; think of it as a persistent let-binding.
    |
@@ -59,37 +59,36 @@
       (syntax-case x ()
         ((define-monad <name> <chain-def> <return-def>)
          (with-syntax ((<with>   (gen-id #'<name> "with-" #'<name>))
-                       (<seq>    (gen-id #'<name> "seq-" #'<name>))
-                       (<chain>  (datum->syntax #'<name> '>>=))
-                       (<return> (datum->syntax #'<name> 'return)))
+                       (<seq>    (gen-id #'<name> "seq-" #'<name>)))
            #'(begin
                (define-context <name>
-                 (<chain>  <chain-def>)
-                 (<return> <return-def>))
+                 (>>=    <chain-def>)
+                 (return <return-def>))
 
                (define-syntax <seq>
                  (lambda (y)
+                   (define (wrap ctx . body)
+                     (with-syntax ((<chain>  (datum->syntax ctx '>>=))
+                                   (<return> (datum->syntax ctx 'return)))
+                       #`(let ((<chain>  <chain-def>)
+                               (<return> <return-def>))
+                           #,@body)))
+
                    (syntax-case y (<-)
                      ((<seq> <<f>>)
-                      (with-syntax ((<>>=>    (datum->syntax #'<seq> '>>=))
-                                    (<return> (datum->syntax #'<seq> 'return)))
-                        #'(let ((<>>=>    <chain-def>)
-                                (<return> <return-def>))
-                          <<f>>)))
+                      (wrap #'<seq> #'<<f>>))
 
                      ((<seq> (<<formal>> <- <<f>>) <<rest>> (... ...))
-                      (with-syntax ((<>>=>    (datum->syntax #'<seq> '>>=))
-                                    (<return> (datum->syntax #'<seq> 'return)))
-                        #'(let ((<>>=>    <chain-def>)
-                                (<return> <return-def>))
-                            (<>>=> <<f>> (lambda (<<formal>>) (<seq> <<rest>> (... ...)))))))
+                      (wrap #'<seq>
+                            #'(<chain-def>
+                                <<f>> (lambda (<<formal>>)
+                                        (<seq> <<rest>> (... ...))))))
 
                      ((<seq> <<f>> <<rest>> (... ...))
-                      (with-syntax ((<>>=>    (datum->syntax #'<seq> '>>=))
-                                    (<return> (datum->syntax #'<seq> 'return)))
-                        #'(let ((<>>=>    <chain-def>)
-                                (<return> <return-def>))
-                            (<>>=> <<f>> (lambda (x) (<seq> <<rest>> (... ...)))))))))))
+                      (wrap #'<seq>
+                            #'(<chain-def>
+                                <<f>> (lambda (_)
+                                        (<seq> <<rest>> (... ...))))))))))
              )))))
 
   (define-auxiliary-keyword <-)

@@ -1,11 +1,9 @@
-(library (monads contexts)
+(library (monads record-contexts)
   (export define-record-context)
   (import (rnrs (6))
+          (monads gen-id))
 
-          (chez-test gen-id)
-          (only (chezscheme) trace-define-syntax))
-
-  (trace-define-syntax define-record-context
+  (define-syntax define-record-context
     (lambda (x)
       (syntax-case x (fields)
         [(define-context <name> (fields <f> ...) <args> ...)

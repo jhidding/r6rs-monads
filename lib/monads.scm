@@ -1,9 +1,9 @@
 (library (monads)
 
   (export define-monad define-context <-
-          failure? make-failure failure-trace failure-exception
+          failure? make-failure failure-trace failure-exception *failure*
           with-maybe seq-maybe
-          with-parser seq-parser)
+          with-parser seq-parser parser-failure)
 
   (import (rnrs (6))
           (monads receive)
@@ -17,9 +17,10 @@
       (lambda (new)
         (case-lambda
           (()    (new #f #f))
+          ((e)   (new e #f))
           ((e t) (new e t))))))
 
-  (define *failed* (make-failure))
+  (define *failure* (make-failure))
 
   #| ----------------------------------------------------------------
    |  Maybe monad
@@ -43,7 +44,7 @@
   #| Returns *failed*, doesn't consume.
    |#
   (define (parser-failure cursor)
-    (values *failed* cursor))
+    (values *failure* cursor))
 
   #| Chain operator
    |#
