@@ -3,7 +3,7 @@
         (monads parser))
 
 #| Get an item from input list |#
-(define (expr c)
+(define (element c)
   (if (null? c)
     (values *failure* c)
     (values (car c) (cdr c))))
@@ -11,7 +11,7 @@
 #| Get an item from input that sattisfies `pred?` |#
 (define (sattisfies pred?)
   (seq-parser
-    (x <- expr)
+    (x <- element)
     (if (pred? x)
       (return x)
       parser-failure)))
@@ -24,7 +24,7 @@
 (define number
   (sattisfies number?))
 
-#| Get a <list>: many <expr>s |#
+#| Get a <list>: many <item>s |#
 (define list-of-items
   (seq-parser
     (x <- (equals '<))
