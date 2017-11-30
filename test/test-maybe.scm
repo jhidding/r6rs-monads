@@ -1,5 +1,6 @@
 (import (rnrs (6))
-        (monads))
+        (monads)
+        (monads maybe))
 
 (define (test-context)
   (define-context x (a 1) (b 2))

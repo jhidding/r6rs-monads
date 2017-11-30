@@ -2,7 +2,7 @@
         (monads)
         (monads parser))
 
-#| |#
+
 (define (item c)
   (if (null? c)
     (values *failure* c)

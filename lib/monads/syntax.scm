@@ -3,8 +3,7 @@
 
   (import (rnrs (6))
           (monads gen-id)
-          (monads aux-keyword)
-          (only (chezscheme) trace-define-syntax))
+          (monads aux-keyword))
 
   #| Defines a context; think of it as a persistent let-binding.
    |
