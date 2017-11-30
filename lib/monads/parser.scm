@@ -58,7 +58,9 @@
       (vs <- (many p))
       (return (cons v vs))))
 
+  #| Applies input to parser p, then returns only the result.
+   |#
   (define (parse p input)
     (receive (result _) (p input)
-      result))
+       result))
   )
