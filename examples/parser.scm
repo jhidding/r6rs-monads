@@ -8,8 +8,8 @@
     (values *failure* c)
     (values (car c) (cdr c))))
 
-#| Get an item from input that sattisfies `pred?` |#
-(define (sattisfies pred?)
+#| Get an item from input that satisfies `pred?` |#
+(define (satisfies pred?)
   (seq-parser
     (x <- element)
     (if (pred? x)
@@ -18,11 +18,11 @@
 
 #| Get an item from input that equals `x` |#
 (define (equals x)
-  (sattisfies (lambda (y) (eq? x y))))
+  (satisfies (lambda (y) (eq? x y))))
 
 #| Get a <number> |#
 (define number
-  (sattisfies number?))
+  (satisfies number?))
 
 #| Get a <list>: many <item>s |#
 (define list-of-items

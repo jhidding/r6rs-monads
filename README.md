@@ -66,7 +66,7 @@ We can build a slightly more advanced parser, that filters the output of
 `element`.
 
 ```scheme
-(define (sattisfies pred?)
+(define (satisfies pred?)
   (seq-parser
     (x <- element)
     (if (pred? x)
@@ -78,12 +78,12 @@ Note that, since the values in the parser monad are functions, `seq-parser`
 returns a function similar to `element`: one that takes a state and returns
 a value and a new state.
 
-Using `sattisfies` we can build a parser that accepts only values that are
+Using `satisfies` we can build a parser that accepts only values that are
 `eq?` to a given value.
 
 ```scheme
 (define (equals x)
-  (sattisfies (lambda (y) (eq? x y))))
+  (satisfies (lambda (y) (eq? x y))))
 ```
 
 Using these basic building blocks we can build a very simple parser that
@@ -91,7 +91,7 @@ reads a recursive list structure.
 
 ```scheme
 (define number
-  (sattisfies number?))
+  (satisfies number?))
 
 (define list-of-items
   (seq-parser

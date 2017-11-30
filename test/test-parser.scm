@@ -9,7 +9,7 @@
     (values (car c) (cdr c))))
 
 
-(define (sattisfies pred?)
+(define (satisfies pred?)
   (seq-parser
     (x <- item)
     (if (pred? x)
@@ -18,7 +18,7 @@
 
 
 (define (test-parsers)
-  (let ((p (some (sattisfies number?))))
+  (let ((p (some (satisfies number?))))
     (assert (failure? (parse p '(a b c))))
     (assert (equal? '(1 2 3) (parse p '(1 2 3)))))
 
@@ -32,10 +32,10 @@
 
 (define (test-parser-recursion)
   (define (equals x)
-    (sattisfies (lambda (y) (eq? x y))))
+    (satisfies (lambda (y) (eq? x y))))
 
   (define number
-    (sattisfies number?))
+    (satisfies number?))
 
   (define list-of-items
     (seq-parser
