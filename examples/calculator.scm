@@ -21,12 +21,13 @@
     (>= pos (string-length text))))
 
 
-#| Basic operations |#
+#| Read a character |#
 (define (item r)
   (if (reader-end? r)
     (values *failure* r)
     (values (reader-peek r) (reader-forward r))))
 
+#| Read a character that satisfies pred |#
 (define (sat pred)
   (seq-parser
     (c <- item)
@@ -34,9 +35,11 @@
       (return c)
       parser-failure)))
 
+#| Read a character equal to `c` |#
 (define (is-char c)
   (sat (lambda (x) (char=? x c))))
 
+#| Read a sequence of characters identical to those in `lst` |#
 (define (is-list lst)
   (if (null? lst)
     (seq-parser (return '()))
@@ -45,9 +48,13 @@
       (is-list (cdr lst))
       (return lst))))
 
+#| Read a string identical to `s` |#
 (define (is-string s)
-  (is-list (string->list s)))
+  (seq-parser
+    (u <- (is-list (string->list s)))
+    (return (list->string u))))
 
+#| Read a sequence of items `p` separated by `sep`. |#
 (define (sep-by p sep)
   (define (sep-by* p sep)
     (seq-parser
@@ -57,34 +64,44 @@
 
   (choice sep-by* parser-failure))
 
-(define (chainl* p op)
-  (define (rest a)
-    (choice (seq-parser
-              (f <- op)
-              (b <- p)
-              (rest (f a b)))
-            (with-parser (return a))))
+#| Read `p`, then read `op`, `p`, fold-left on the result
+ | of applying the result of `op`.
+ |#
+(define chain-left
+  (case-lambda
+    ((value operator)
+     (define (rest a)
+       (choice (seq-parser
+                 (f <- operator)
+                 (b <- value)
+                 (rest (f a b)))
+               (with-parser (return a))))
+     (seq-parser (a <- value) (rest a)))
 
-  (seq-parser (a <- p) (rest a)))
+    ((value operator alternative)
+     (with-parser
+       (choice (chain-left value operator)
+               (return alternative))))))
 
-(define (chainl p op a)
-  (with-parser
-    (choice (chainl1* p op) (return a))))
-
+#| Read many spaces |#
 (define space (many (is-char #\space)))
 
+#| Tokenize parser |#
 (define (token p)
   (seq-parser
     (a <- p) space (return a)))
 
+#| Read a tokenized string |#
 (define (symb cs)
   (token (is-string cs)))
 
+#| Apply parser, return only result |#
 (define (parse p r)
   (receive (result forget-r) ((seq-parser space p) r)
     result))
 
-(define number 
+#| Parse an integer |#
+(define number
   (seq-parser
     (x <- (token (some (sat char-numeric?))))
     (return (string->number (list->string x)))))
@@ -103,14 +120,25 @@
     (seq-parser
       (symb "/") (return /))))
 
-(define (term) (chainl* (factor) mulop))
-(define (expr) (chainl* (term) addop))
-(define (factor) (choice number (seq-parser
-                                (symb "(")
-                                (n <- (expr))
-                                (symb ")")
-                                (return n))))
+#| For these last three definitions, order of definition matters.
+ | The original in Haskell is lazy.
+ |#
+(define factor
+  (choice number
+          (seq-parser
+            (symb "(")
+            (n <- expr)
+            (symb ")")
+            (return n))))
 
-(display (parse (expr) (make-reader " 1 - 2 * 3 + 4" 0)))
-(newline)
+(define term (chain-left factor mulop))
 
+(define expr (chain-left term addop))
+
+(define (calculate s)
+  (display s) (display " = ")
+  (display (parse expr (make-reader s 0)))
+  (newline))
+
+(calculate " 1 - 2 * 3 + 4")
+(calculate "3 * 42 / (6*7 - 3)")
