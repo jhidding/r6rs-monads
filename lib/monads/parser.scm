@@ -23,10 +23,10 @@
    |#
   (define (parser->>= parser f)
     (lambda (cursor)
-      (receive (value cursor) (parser cursor)
+      (receive (value next) (parser cursor)
         (if (failure? value)
-          (values value cursor)
-          ((f value) cursor)))))
+          (values value next)
+          ((f value) next)))))
 
   (define-monad parser parser->>= parser-return)
 
