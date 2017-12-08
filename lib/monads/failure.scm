@@ -5,13 +5,14 @@
   #| Failure object
    |#
   (define-record-type failure
-    (fields exception trace)
+    (fields exception trace state)
     (protocol
       (lambda (new)
         (case-lambda
-          (()    (new #f #f))
-          ((e)   (new e #f))
-          ((e t) (new e t))))))
+          (()      (new #f #f #f))
+          ((e)     (new e #f #f))
+          ((e t)   (new e t #f))
+          ((e t s) (new e t s))))))
 
   (define *failure* (make-failure))
 )
