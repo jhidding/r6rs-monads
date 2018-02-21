@@ -2,6 +2,7 @@
   (export define-monad define-context <-)
 
   (import (rnrs (6))
+          ; (only (chezscheme) trace-define-syntax)
           (monads gen-id)
           (monads aux-keyword))
 
@@ -56,37 +57,41 @@
   (define-syntax define-monad
     (lambda (x)
       (syntax-case x ()
-        ((define-monad <name> <chain-def> <return-def>)
+        ((define-monad <name> <chain-def> <return-def> (<extra-vars> <extra-defs>) ...)
          (with-syntax ((<with>   (gen-id #'<name> "with-" #'<name>))
                        (<seq>    (gen-id #'<name> "seq-" #'<name>)))
            #'(begin
                (define-context <name>
                  (>>=    <chain-def>)
-                 (return <return-def>))
+                 (return <return-def>)
+                 (<extra-vars> <extra-defs>) ...)
 
                (define-syntax <seq>
                  (lambda (y)
                    (define (wrap ctx . body)
                      (with-syntax ((<chain>  (datum->syntax ctx '>>=))
-                                   (<return> (datum->syntax ctx 'return)))
-                       #`(let ((<chain>  <chain-def>)
-                               (<return> <return-def>))
+                                   (<return> (datum->syntax ctx 'return))
+                                   (<extra-vars> (datum->syntax ctx '<extra-vars>))
+                                    ...)
+                       #`(letrec ((<chain>  <chain-def>)
+                                  (<return> <return-def>)
+                                  (<extra-vars> <extra-defs>) ...)
                            #,@body)))
 
                    (syntax-case y (<-)
                      ((<seq> <<f>>)
                       (wrap #'<seq> #'<<f>>))
 
-                     ((<seq> (<<formal>> <- <<f>>) <<rest>> (... ...))
+                     ((<seq> (<<formals>> (... ...) <- <<f>>) <<rest>> (... ...))
                       (wrap #'<seq>
                             #'(<chain-def>
-                                <<f>> (lambda (<<formal>>)
+                                <<f>> (lambda (<<formals>> (... ...))
                                         (<seq> <<rest>> (... ...))))))
 
                      ((<seq> <<f>> <<rest>> (... ...))
                       (wrap #'<seq>
                             #'(<chain-def>
-                                <<f>> (lambda (_)
+                                <<f>> (lambda _
                                         (<seq> <<rest>> (... ...))))))))))
              )))))
 
